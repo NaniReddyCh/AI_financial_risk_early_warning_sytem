@@ -50,38 +50,31 @@ def _make_trend_frame(market_df: pd.DataFrame, close_col: str = "close") -> pd.D
 def run_dashboard() -> None:
     st.set_page_config(page_title="AI Financial Risk EWS", page_icon="⚠️", layout="wide")
     st.title("⚠️ AI Financial Risk Early Warning Dashboard")
-    st.caption("Trained market model + pretrained sentiment inference (daily batch workflow)")
+    st.caption("Uses your pretrained market model + pretrained sentiment inference (no retraining on score run).")
 
     with st.sidebar:
         st.header("Configuration")
         symbol = st.text_input("Yahoo Symbol", value="^GSPC")
         period = st.selectbox("Market History Window", options=["6mo", "1y", "2y", "5y"], index=1)
-        model_path = Path(st.text_input("Model Path", value="artifacts/risk_model.joblib"))
+        model_path = Path(st.text_input("Pretrained Market Model Path", value="artifacts/risk_model.joblib"))
         headlines_text = st.text_area(
             "News Headlines (one per line)",
             value="Markets mixed as investors await inflation data\nMajor bank warns of recession risks",
             height=160,
         )
-
-        train_clicked = st.button("Train / Retrain Model", type="primary", use_container_width=True)
-        score_clicked = st.button("Run Daily Risk Score", use_container_width=True)
+        score_clicked = st.button("Run Daily Risk Score", type="primary", use_container_width=True)
 
     state = DashboardState(symbol=symbol, model_path=model_path, period=period)
     headlines = [line.strip() for line in headlines_text.splitlines() if line.strip()]
 
-    if train_clicked:
-        with st.spinner("Fetching market data and training model..."):
-            market_df = fetch_market_data(state.symbol, period="5y")
-            pipeline = FinancialRiskPipeline()
-            metrics = pipeline.train(market_df)
-            pipeline.save_model(state.model_path)
-        st.success("Model trained and saved.")
-        st.subheader("Validation Metrics")
-        st.json({"roc_auc": metrics["roc_auc"], "f1": metrics["classification_report"].get("1", {}).get("f1-score")})
+    st.info(
+        "Market model features expected by default: ret_1d, ret_5d, volatility_14, ma20, ma50, price_ma_ratio. "
+        "You can train externally and place the model at the configured path."
+    )
 
     if score_clicked:
         if not state.model_path.exists():
-            st.error("Model file not found. Train the model first or provide a valid model path.")
+            st.error("Model file not found. Please provide your externally trained market model path.")
             return
 
         with st.spinner("Loading model and scoring latest data..."):
@@ -104,8 +97,9 @@ def run_dashboard() -> None:
             )
         with col2:
             st.subheader("Recent Market Trend")
-            trend_df = _make_trend_frame(market_df)
-            st.line_chart(trend_df.set_index("date")[["close", "rolling_20"]])
+            price_col = "adj_close" if "adj_close" in market_df.columns else "close"
+            trend_df = _make_trend_frame(market_df, close_col=price_col)
+            st.line_chart(trend_df.set_index("date")[[price_col, "rolling_20"]])
 
         st.subheader("Headlines Used")
         st.write("\n".join([f"- {h}" for h in headlines]) if headlines else "No headlines provided.")

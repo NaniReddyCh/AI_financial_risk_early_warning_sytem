@@ -7,15 +7,24 @@ import pandas as pd
 
 
 def fetch_market_data(symbol: str, period: str = "5y", interval: str = "1d") -> pd.DataFrame:
-    """Fetch OHLCV market data from Yahoo Finance."""
+    """Fetch market data from Yahoo Finance and normalize column names."""
     import yfinance as yf
 
     hist = yf.Ticker(symbol).history(period=period, interval=interval)
     if hist.empty:
         raise ValueError(f"No market data returned for {symbol!r}.")
+
     hist = hist.reset_index()
-    hist = hist.rename(columns={"Date": "date", "Close": "close", "Volume": "volume"})
-    return hist[["date", "close", "volume"]].dropna()
+    rename_map = {
+        "Date": "date",
+        "Close": "close",
+        "Adj Close": "adj_close",
+        "Volume": "volume",
+    }
+    hist = hist.rename(columns=rename_map)
+
+    keep_cols = [col for col in ["date", "close", "adj_close", "volume"] if col in hist.columns]
+    return hist[keep_cols].dropna(subset=[col for col in ["close", "adj_close"] if col in hist.columns]).copy()
 
 
 def parse_news_feed(rows: Iterable[dict]) -> tuple[datetime, list[str]]:

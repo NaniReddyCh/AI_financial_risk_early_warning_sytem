@@ -12,12 +12,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="AI Financial Risk Early Warning System")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    train_parser = sub.add_parser("train", help="Train market risk model")
+    train_parser = sub.add_parser("train", help="Optional: train market model locally")
     train_parser.add_argument("--symbol", default="^GSPC", help="Yahoo symbol (default: S&P 500)")
     train_parser.add_argument("--period", default="5y", help="History period")
     train_parser.add_argument("--model-path", default="artifacts/risk_model.joblib")
 
-    score_parser = sub.add_parser("score", help="Run daily risk score")
+    score_parser = sub.add_parser("score", help="Run daily risk score using pretrained market model")
     score_parser.add_argument("--symbol", default="^GSPC")
     score_parser.add_argument("--period", default="1y")
     score_parser.add_argument("--model-path", default="artifacts/risk_model.joblib")
@@ -42,7 +42,14 @@ def main() -> None:
         return
 
     if args.command == "score":
-        pipeline = FinancialRiskPipeline.load_model(Path(args.model_path))
+        model_path = Path(args.model_path)
+        if not model_path.exists():
+            raise FileNotFoundError(
+                f"Pretrained market model not found at {model_path}. "
+                "Provide your externally trained model path via --model-path."
+            )
+
+        pipeline = FinancialRiskPipeline.load_model(model_path)
         market_df = fetch_market_data(args.symbol, period=args.period)
         if not args.headline:
             args.headline = [
