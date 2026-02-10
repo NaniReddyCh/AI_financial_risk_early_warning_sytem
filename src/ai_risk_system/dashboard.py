@@ -54,7 +54,7 @@ def run_dashboard() -> None:
 
     with st.sidebar:
         st.header("Configuration")
-        symbol = st.text_input("Yahoo Symbol", value="^GSPC")
+        symbol = st.text_input("Yahoo Symbol", value="^NSEI")
         period = st.selectbox("Market History Window", options=["6mo", "1y", "2y", "5y"], index=1)
         model_path = Path(st.text_input("Pretrained Market Model Path", value="artifacts/risk_model.joblib"))
         headlines_text = st.text_area(

@@ -22,7 +22,6 @@ def test_external_model_style_scoring():
     x = features[pipeline.feature_columns]
     y = features["risk_label"]
 
-    # Mimics externally-trained model artifact
     model = LogisticRegression(max_iter=500)
     model.fit(x, y)
     pipeline.model = model
@@ -33,3 +32,14 @@ def test_external_model_style_scoring():
     )
     assert 0 <= result["final_risk_score"] <= 1
     assert result["risk_category"] in {"Low", "Medium", "High"}
+
+
+def test_multiindex_columns_are_supported():
+    pipeline = FinancialRiskPipeline()
+    base = _market_df()[["date", "adj_close", "volume"]].copy()
+    multi = base.copy()
+    multi.columns = pd.MultiIndex.from_tuples([(c, "^NSEI") for c in multi.columns])
+
+    features = pipeline.build_features(multi, include_label=True)
+    assert not features.empty
+    assert set(pipeline.feature_columns).issubset(features.columns)

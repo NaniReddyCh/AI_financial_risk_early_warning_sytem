@@ -73,7 +73,7 @@ Dashboard behavior:
 ### Score using pretrained market model (recommended)
 
 ```bash
-risk-ews score --symbol ^GSPC --period 1y --model-path artifacts/risk_model.joblib \
+risk-ews score --symbol ^NSEI --period 1y --model-path artifacts/risk_model.joblib \
   --headline "Bank warns of recession risks" \
   --headline "Large-cap tech beats estimates"
 ```
@@ -81,7 +81,7 @@ risk-ews score --symbol ^GSPC --period 1y --model-path artifacts/risk_model.jobl
 ### Optional local training helper
 
 ```bash
-risk-ews train --symbol ^GSPC --period 5y --model-path artifacts/risk_model.joblib
+risk-ews train --symbol ^NSEI --period 5y --model-path artifacts/risk_model.joblib
 ```
 
 Use this only for local experimentation; production flow should use your external pretrained market model.

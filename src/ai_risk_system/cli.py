@@ -13,12 +13,12 @@ def _build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     train_parser = sub.add_parser("train", help="Optional: train market model locally")
-    train_parser.add_argument("--symbol", default="^GSPC", help="Yahoo symbol (default: S&P 500)")
+    train_parser.add_argument("--symbol", default="^NSEI", help="Yahoo symbol (default: S&P 500)")
     train_parser.add_argument("--period", default="5y", help="History period")
     train_parser.add_argument("--model-path", default="artifacts/risk_model.joblib")
 
     score_parser = sub.add_parser("score", help="Run daily risk score using pretrained market model")
-    score_parser.add_argument("--symbol", default="^GSPC")
+    score_parser.add_argument("--symbol", default="^NSEI")
     score_parser.add_argument("--period", default="1y")
     score_parser.add_argument("--model-path", default="artifacts/risk_model.joblib")
     score_parser.add_argument(

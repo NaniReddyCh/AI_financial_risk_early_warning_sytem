@@ -17,7 +17,7 @@ class PipelineConfig:
     """Configuration for training and scoring."""
 
     lookahead_days: int = 7
-    drop_threshold: float = 0.05
+    drop_threshold: float = 0.03
     market_weight: float = 0.7
     sentiment_weight: float = 0.3
 
@@ -41,6 +41,14 @@ class FinancialRiskPipeline:
         self.sentiment = FinancialSentimentAnalyzer()
 
     @staticmethod
+    def _flatten_columns(df: pd.DataFrame) -> pd.DataFrame:
+        out = df.copy()
+        if isinstance(out.columns, pd.MultiIndex):
+            out.columns = out.columns.get_level_values(0)
+        out.columns = [str(c).strip() for c in out.columns]
+        return out
+
+    @staticmethod
     def _price_column(df: pd.DataFrame) -> str:
         for col in ("adj_close", "Adj Close", "close", "Close"):
             if col in df.columns:
@@ -48,7 +56,7 @@ class FinancialRiskPipeline:
         raise ValueError("Market dataframe must include one of: adj_close, Adj Close, close, Close")
 
     def build_features(self, market_df: pd.DataFrame, include_label: bool = False) -> pd.DataFrame:
-        df = market_df.copy()
+        df = self._flatten_columns(market_df)
         if "date" in df.columns:
             df = df.sort_values("date")
 
